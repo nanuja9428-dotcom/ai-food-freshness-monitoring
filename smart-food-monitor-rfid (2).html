@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Food & Vegetable Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf7f2;
+  --cream: #fffdf8;
+  --green: #2d7a4f;
+  --green-light: #e8f5ee;
+  --green-mid: #4caf72;
+  --orange: #e8763a;
+  --orange-light: #fef0e7;
+  --red: #d64040;
+  --red-light: #fdeaea;
+  --yellow: #e8b84b;
+  --yellow-light: #fef8e7;
+  --text: #1c1c1e;
+  --text-muted: #6b7280;
+  --card: #ffffff;
+  --border: #ede8e0;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.1);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 10% 10%, rgba(45,122,79,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(232,118,58,0.06) 0%, transparent 50%);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--cream);
+  border-bottom: 2px solid var(--border);
+  padding: 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--green), var(--green-mid));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(45,122,79,0.3);
+}
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; }
+.logo-sub { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green-light); border: 1.5px solid #a3d9b8;
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 0.78rem; font-weight: 600; color: var(--green);
+}
+.dot-pulse { width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.4);opacity:0.6;} }
+.header-stats { display: flex; gap: 20px; }
+.hstat { text-align: center; }
+.hstat-val { font-size: 1.1rem; font-weight: 700; }
+.hstat-lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; }
+
+/* ── LAYOUT ── */
+.page { padding: 28px 36px; max-width: 1440px; margin: 0 auto; }
+
+/* ── ALERT BANNER ── */
+.alert-banner {
+  border-radius: 16px; padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 24px;
+  font-size: 0.9rem; font-weight: 600;
+  animation: slideDown 0.5s ease;
+  display: none;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+.alert-banner.show { display: flex; }
+.alert-banner.danger { background: var(--red-light); border: 2px solid #f5a5a5; color: var(--red); }
+.alert-banner.warning { background: var(--yellow-light); border: 2px solid #f5dfa5; color: #92600a; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem; font-weight: 700;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 2px;
+  background: linear-gradient(90deg, var(--border), transparent);
+  border-radius: 2px;
+}
+
+/* ── ITEM GRID ── */
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.item-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 18px;
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.item-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.item-card.fresh { border-color: #a3d9b8; }
+.item-card.warning { border-color: #f5dfa5; }
+.item-card.expiring { border-color: #f5a5a5; animation: cardPulse 2s infinite; }
+.item-card.expired { border-color: var(--red); background: var(--red-light); }
+@keyframes cardPulse { 0%,100%{border-color:#f5a5a5;} 50%{border-color:var(--red);} }
+
+.item-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  border-radius: 20px 20px 0 0;
+}
+.item-card.fresh::before { background: linear-gradient(90deg, var(--green), var(--green-mid)); }
+.item-card.warning::before { background: linear-gradient(90deg, var(--yellow), #f0c040); }
+.item-card.expiring::before { background: linear-gradient(90deg, var(--orange), #e8523a); }
+.item-card.expired::before { background: linear-gradient(90deg, var(--red), #c02020); }
+
+.item-emoji { font-size: 2.4rem; margin-bottom: 8px; display: block; }
+.item-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+.item-category { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+
+.freshness-bar {
+  height: 6px; background: #ede8e0; border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+}
+.freshness-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.item-meta { display: flex; justify-content: space-between; align-items: center; }
+.days-badge {
+  font-size: 0.72rem; font-weight: 700;
+  padding: 3px 8px; border-radius: 8px;
+}
+.days-badge.fresh { background: var(--green-light); color: var(--green); }
+.days-badge.warning { background: var(--yellow-light); color: #92600a; }
+.days-badge.expiring { background: var(--orange-light); color: var(--orange); }
+.days-badge.expired { background: var(--red-light); color: var(--red); }
+
+.item-temp { font-size: 0.72rem; color: var(--text-muted); }
+.qty-badge {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 0.7rem; font-weight: 700;
+  background: rgba(0,0,0,0.06); color: var(--text-muted);
+  padding: 2px 7px; border-radius: 6px;
+}
+
+/* ── BOTTOM GRID ── */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 340px;
+  gap: 20px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.card-head {
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--border);
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(to right, var(--cream), white);
+}
+.card-body { padding: 18px 20px; }
+
+/* EXPIRY TABLE */
+.expiry-table { width: 100%; border-collapse: collapse; }
+.expiry-table th {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted);
+  padding: 8px 10px; border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+.expiry-table td {
+  padding: 10px 10px;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.expiry-table tr:last-child td { border-bottom: none; }
+.expiry-table tr:hover td { background: var(--bg); }
+.status-pill {
+  font-size: 0.68rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 20px;
+  white-space: nowrap;
+}
+.status-pill.fresh { background: var(--green-light); color: var(--green); }
+.status-pill.warning { background: var(--yellow-light); color: #92600a; }
+.status-pill.expiring { background: var(--orange-light); color: var(--orange); }
+.status-pill.expired { background: var(--red-light); color: var(--red); }
+
+/* STORAGE ZONES */
+.zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.zone-card {
+  border-radius: 14px; padding: 14px;
+  background: var(--bg); border: 2px solid var(--border);
+}
+.zone-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.zone-name { font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; }
+.zone-temp { font-size: 0.78rem; font-weight: 700; }
+.zone-count { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+.zone-bar { height: 4px; background: #ede8e0; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.zone-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* NOTIFICATIONS */
+.notif-stream { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.notif-item {
+  display: flex; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.79rem;
+  animation: fadeSlide 0.4s ease;
+}
+@keyframes fadeSlide { from{opacity:0;transform:translateX(15px);} to{opacity:1;transform:translateX(0);} }
+.notif-item.fresh { background: var(--green-light); border-left: 3px solid var(--green); }
+.notif-item.warning { background: var(--yellow-light); border-left: 3px solid var(--yellow); }
+.notif-item.danger { background: var(--red-light); border-left: 3px solid var(--red); }
+.notif-item.info { background: #f0f4ff; border-left: 3px solid #6b8de8; }
+.notif-icon { font-size: 1.1rem; flex-shrink: 0; }
+.notif-title { font-weight: 700; margin-bottom: 1px; }
+.notif-body { color: var(--text-muted); line-height: 1.4; }
+.notif-time { font-size: 0.65rem; color: var(--text-muted); margin-top: 3px; font-weight: 600; }
+
+/* CONTROL BUTTONS */
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  padding: 8px 14px; border: none; border-radius: 10px;
+  font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.btn.green { background: var(--green); color: white; }
+.btn.orange { background: var(--orange); color: white; }
+.btn.red { background: var(--red); color: white; }
+.btn.yellow { background: var(--yellow); color: white; }
+.btn.ghost { background: var(--bg); color: var(--text); border: 2px solid var(--border); }
+
+/* MOBILE POPUP */
+.mobile-popup {
+  position: fixed; top: 84px; right: 24px;
+  width: 320px; z-index: 9999;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  overflow: hidden;
+  transform: translateX(380px);
+  transition: transform 0.55s cubic-bezier(0.34,1.56,0.64,1);
+}
+.mobile-popup.show { transform: translateX(0); }
+.popup-notch {
+  height: 4px;
+  background: linear-gradient(90deg, var(--green), var(--green-mid));
+  margin: 0 auto 0;
+  width: 100%;
+}
+.popup-bar {
+  padding: 14px 18px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.popup-appname { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
+.popup-time { font-size: 0.7rem; color: var(--text-muted); }
+.popup-content { padding: 0 18px 18px; }
+.popup-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+.popup-icon-wrap {
+  width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+}
+.popup-icon-wrap.fresh { background: var(--green-light); }
+.popup-icon-wrap.warning { background: var(--yellow-light); }
+.popup-icon-wrap.danger { background: var(--red-light); }
+.popup-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; }
+.popup-msg { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin-top: 2px; }
+.popup-actions { display: flex; gap: 8px; margin-top: 12px; }
+.popup-btn {
+  flex: 1; padding: 9px; border-radius: 12px; border: none;
+  font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.popup-btn.primary { background: var(--green); color: white; }
+.popup-btn.secondary { background: var(--bg); color: var(--text); }
+
+/* STATS ROW */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card); border-radius: 16px; padding: 16px 18px;
+  border: 2px solid var(--border); box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 14px;
+}
+.stat-icon { font-size: 1.8rem; }
+.stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.stat-lbl { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; margin-top: 3px; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── RFID SECTION ── */
+.rfid-section {
+  margin-bottom: 32px;
+}
+.rfid-panel {
+  background: var(--card);
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.rfid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+.rfid-col {
+  padding: 20px;
+  border-right: 2px solid var(--border);
+}
+.rfid-col:last-child { border-right: none; }
+
+/* RFID Reader Visual */
+.rfid-reader-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.rfid-reader-body {
+  width: 120px; height: 76px;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border-radius: 14px;
+  border: 3px solid #334155;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.rfid-reader-led {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e, 0 0 16px rgba(34,197,94,0.4);
+  animation: rfidLedPulse 1.6s infinite;
+  position: absolute; top: 8px; right: 10px;
+}
+.rfid-reader-led.scanning {
+  background: #3b82f6;
+  box-shadow: 0 0 8px #3b82f6, 0 0 20px rgba(59,130,246,0.5);
+  animation: rfidLedScan 0.4s infinite;
+}
+.rfid-reader-led.detected {
+  background: #f59e0b;
+  box-shadow: 0 0 12px #f59e0b, 0 0 24px rgba(245,158,11,0.6);
+  animation: rfidLedDetect 0.3s infinite alternate;
+}
+@keyframes rfidLedPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+@keyframes rfidLedScan { 0%{opacity:1;} 50%{opacity:0.3;} 100%{opacity:1;} }
+@keyframes rfidLedDetect { from{transform:scale(1);} to{transform:scale(1.4);} }
+
+.rfid-reader-label {
+  font-size: 0.55rem; font-weight: 700; color: #64748b;
+  letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;
+}
+.rfid-antenna-lines {
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.rfid-antenna-arc {
+  border: 2px solid transparent;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  opacity: 0;
+}
+.rfid-antenna-arc.active { animation: rfidWave 1.2s infinite; }
+.rfid-antenna-arc:nth-child(1) { width: 24px; height: 12px; animation-delay: 0s; }
+.rfid-antenna-arc:nth-child(2) { width: 40px; height: 20px; animation-delay: 0.2s; }
+.rfid-antenna-arc:nth-child(3) { width: 56px; height: 28px; animation-delay: 0.4s; }
+@keyframes rfidWave { 0%{opacity:0;} 40%{opacity:0.9;} 100%{opacity:0;} }
+
+.rfid-reader-status {
+  font-size: 0.72rem; font-weight: 700; text-align: center;
+  padding: 5px 12px; border-radius: 20px;
+  background: var(--green-light); color: var(--green);
+}
+.rfid-reader-status.scanning-st { background: #eff6ff; color: #2563eb; }
+.rfid-reader-status.detected-st { background: var(--yellow-light); color: #b45309; }
+
+.rfid-reader-info { font-size: 0.68rem; color: var(--text-muted); text-align: center; line-height: 1.5; margin-top: 4px; }
+
+/* RFID Tags grid */
+.rfid-tags-grid {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 280px; overflow-y: auto;
+}
+.rfid-tag-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.rfid-tag-card:hover { border-color: #3b82f6; background: #f0f6ff; transform: translateX(3px); }
+.rfid-tag-card.scanning-tag {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  animation: tagScanAnim 0.6s ease;
+}
+.rfid-tag-card.scanned {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+@keyframes tagScanAnim { 0%{transform:scale(1.03);box-shadow:0 0 0 3px rgba(59,130,246,0.3);} 100%{transform:scale(1);box-shadow:none;} }
+
+.rfid-tag-icon-wrap {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: white; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.rfid-tag-details { flex: 1; }
+.rfid-tag-name { font-size: 0.82rem; font-weight: 700; }
+.rfid-tag-id { font-size: 0.62rem; color: var(--text-muted); font-family: monospace; }
+.rfid-tag-status { font-size: 0.62rem; font-weight: 700; }
+.rfid-tag-status.fresh { color: var(--green); }
+.rfid-tag-status.warning { color: #b45309; }
+.rfid-tag-status.expiring { color: var(--orange); }
+.rfid-tag-status.expired { color: var(--red); }
+
+.rfid-chip {
+  width: 28px; height: 18px;
+  background: linear-gradient(135deg, #d4a940, #b8902e);
+  border-radius: 3px;
+  border: 1px solid #a07820;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.rfid-chip::after {
+  content: '';
+  width: 14px; height: 10px;
+  border: 1.5px solid #7a5a10;
+  border-radius: 1px;
+}
+
+/* Scan Log */
+.scan-log {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 260px; overflow-y: auto;
+  font-size: 0.75rem;
+}
+.scan-log-entry {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 8px 10px;
+  background: var(--bg); border-radius: 10px;
+  border-left: 3px solid var(--border);
+  animation: fadeSlide 0.3s ease;
+}
+.scan-log-entry.ok { border-left-color: var(--green); }
+.scan-log-entry.warn { border-left-color: var(--yellow); }
+.scan-log-entry.err { border-left-color: var(--red); }
+.scan-log-entry.info { border-left-color: #6b8de8; }
+.scan-log-time { color: var(--text-muted); font-size: 0.65rem; white-space: nowrap; font-weight: 600; }
+.scan-log-msg { flex: 1; line-height: 1.4; }
+.scan-log-tag { font-family: monospace; font-size: 0.65rem; background: rgba(0,0,0,0.05); padding: 1px 5px; border-radius: 4px; color: #5b48cc; }
+
+.rfid-scan-btn {
+  width: 100%; padding: 10px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white; border: none; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  margin-top: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.rfid-scan-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+.rfid-scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.rfid-scan-all-btn {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+.rfid-scan-all-btn:hover { box-shadow: 0 6px 20px rgba(168,85,247,0.4); }
+
+.rfid-stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.rfid-stat {
+  text-align: center; padding: 8px;
+  background: var(--bg); border-radius: 10px; border: 1.5px solid var(--border);
+}
+.rfid-stat-val { font-size: 1.1rem; font-weight: 700; }
+.rfid-stat-lbl { font-size: 0.6rem; color: var(--text-muted); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🥦</div>
+    <div>
+      <div class="logo-text">FreshTrack Pro</div>
+      <div class="logo-sub">Smart Food & Vegetable Monitoring System</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-stats">
+      <div class="hstat"><div class="hstat-val" id="h-total">24</div><div class="hstat-lbl">Total Items</div></div>
+      <div class="hstat"><div class="hstat-val" style="color:var(--green)" id="h-fresh">16</div><div class="hstat-lbl">Fresh</div></div>
+      <div class="hstat"><div class="hstat-val" style="color:var(--yellow)" id="h-warn">5</div><div class="hstat-lbl">Warning</div></div>
+      <div class="hstat"><div class="hstat-val" style="color:var(--red)" id="h-exp">3</div><div class="hstat-lbl">Expiring</div></div>
+    </div>
+    <div class="live-badge"><div class="dot-pulse"></div>Live Monitor</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ALERT BANNER -->
+  <div class="alert-banner" id="alert-banner">
+    <span id="alert-icon" style="font-size:1.3rem">🚨</span>
+    <span id="alert-text">Critical: Tomatoes expiring today! Immediate action required.</span>
+    <button class="btn ghost" style="margin-left:auto;font-size:0.72rem" onclick="dismissBanner()">✕ Dismiss</button>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">🏪</div>
+      <div><div class="stat-val" id="s-items">24</div><div class="stat-lbl">Items Tracked</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏰</div>
+      <div><div class="stat-val" style="color:var(--orange)" id="s-expiring">3</div><div class="stat-lbl">Expiring in 2 days</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">❄️</div>
+      <div><div class="stat-val" style="color:#4b9fd4">4°C</div><div class="stat-lbl">Avg Cold Storage</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div><div class="stat-val" style="color:var(--red)" id="s-lowstock">4</div><div class="stat-lbl">Low Stock Items</div></div>
+    </div>
+  </div>
+
+  <!-- VEGETABLES -->
+  <div class="section-title">🥬 Vegetables</div>
+  <div class="items-grid" id="veg-grid"></div>
+
+  <!-- FRUITS -->
+  <div class="section-title">🍎 Fruits</div>
+  <div class="items-grid" id="fruit-grid"></div>
+
+  <!-- DAIRY & GRAINS -->
+  <div class="section-title">🥛 Dairy & Pantry</div>
+  <div class="items-grid" id="dairy-grid"></div>
+
+  <!-- RFID TAG & READER SIMULATION -->
+  <div class="rfid-section">
+    <div class="section-title">📡 RFID Tag & Reader Simulation</div>
+    <div class="rfid-panel">
+      <div class="rfid-layout">
+
+        <!-- Col 1: RFID Reader -->
+        <div class="rfid-col">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">📶 RFID Reader Unit</div>
+          <div class="rfid-reader-wrap">
+            <div class="rfid-reader-body">
+              <div class="rfid-reader-led" id="rfid-led"></div>
+              <div style="font-size:0.5rem;color:#64748b;font-weight:700;letter-spacing:1.5px">RC522</div>
+              <div style="font-size:0.45rem;color:#475569;margin-top:2px">13.56 MHz</div>
+            </div>
+            <div class="rfid-antenna-lines" id="rfid-arcs">
+              <div class="rfid-antenna-arc" id="arc1"></div>
+              <div class="rfid-antenna-arc" id="arc2"></div>
+              <div class="rfid-antenna-arc" id="arc3"></div>
+            </div>
+            <div class="rfid-reader-status" id="rfid-reader-status">● Standby</div>
+            <div class="rfid-reader-info" id="rfid-reader-info">
+              Frequency: 13.56 MHz<br>
+              Protocol: ISO/IEC 14443<br>
+              Range: ~10 cm<br>
+              Last scan: <span id="rfid-last-scan">—</span>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="rfid-stats-row">
+              <div class="rfid-stat"><div class="rfid-stat-val" id="rfid-total-scans" style="color:#6b8de8">0</div><div class="rfid-stat-lbl">Total Scans</div></div>
+              <div class="rfid-stat"><div class="rfid-stat-val" id="rfid-ok-scans" style="color:var(--green)">0</div><div class="rfid-stat-lbl">Fresh Tags</div></div>
+              <div class="rfid-stat"><div class="rfid-stat-val" id="rfid-alert-scans" style="color:var(--red)">0</div><div class="rfid-stat-lbl">Alert Tags</div></div>
+            </div>
+            <button class="rfid-scan-btn rfid-scan-all-btn" id="rfid-scan-all-btn" onclick="rfidScanAll()">
+              📡 Scan All RFID Tags
+            </button>
+          </div>
+        </div>
+
+        <!-- Col 2: RFID Tags -->
+        <div class="rfid-col">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px">🏷️ RFID Tags on Products</div>
+          <div class="rfid-tags-grid" id="rfid-tags-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Col 3: Scan Log -->
+        <div class="rfid-col">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">📋 Scan Log</div>
+            <button class="btn ghost" style="font-size:0.65rem;padding:3px 8px" onclick="clearScanLog()">Clear</button>
+          </div>
+          <div class="scan-log" id="rfid-scan-log">
+            <div class="scan-log-entry info">
+              <span class="scan-log-time">--:--</span>
+              <span class="scan-log-msg">RFID reader initialized. Ready to scan tags.</span>
+            </div>
+          </div>
+          <button class="rfid-scan-btn" id="rfid-single-btn" onclick="rfidScanNext()" style="margin-top:10px">
+            🔍 Scan Next Tag
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom-grid">
+
+    <!-- Expiry Table -->
+    <div class="card">
+      <div class="card-head">
+        📋 Expiry Schedule
+        <button class="btn ghost" style="font-size:0.72rem" onclick="sortTable()">Sort ↕</button>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="expiry-table" id="expiry-table">
+          <thead><tr>
+            <th>Item</th><th>Days Left</th><th>Qty</th><th>Status</th><th>Action</th>
+          </tr></thead>
+          <tbody id="expiry-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Storage Zones -->
+    <div class="card">
+      <div class="card-head">❄️ Storage Zones</div>
+      <div class="card-body">
+        <div class="zone-grid">
+          <div class="zone-card">
+            <div class="zone-icon">🧊</div>
+            <div class="zone-name">Cold Storage</div>
+            <div class="zone-temp" style="color:#4b9fd4">4°C</div>
+            <div class="zone-count" id="zone-cold">8 items</div>
+            <div class="zone-bar"><div class="zone-bar-fill" style="width:65%;background:#4b9fd4"></div></div>
+          </div>
+          <div class="zone-card">
+            <div class="zone-icon">🌡️</div>
+            <div class="zone-name">Room Temp</div>
+            <div class="zone-temp" style="color:var(--orange)">24°C</div>
+            <div class="zone-count" id="zone-room">10 items</div>
+            <div class="zone-bar"><div class="zone-bar-fill" style="width:80%;background:var(--orange)"></div></div>
+          </div>
+          <div class="zone-card">
+            <div class="zone-icon">🥶</div>
+            <div class="zone-name">Freezer</div>
+            <div class="zone-temp" style="color:#6b8de8">-18°C</div>
+            <div class="zone-count" id="zone-freeze">4 items</div>
+            <div class="zone-bar"><div class="zone-bar-fill" style="width:40%;background:#6b8de8"></div></div>
+          </div>
+          <div class="zone-card">
+            <div class="zone-icon">🌿</div>
+            <div class="zone-name">Dry Store</div>
+            <div class="zone-temp" style="color:var(--green)">22°C</div>
+            <div class="zone-count" id="zone-dry">6 items</div>
+            <div class="zone-bar"><div class="zone-bar-fill" style="width:55%;background:var(--green)"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card-head" style="padding:10px 0;border:none;font-size:0.85rem">🎮 Simulation Controls</div>
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn green" onclick="simFresh()">✅ All Fresh</button>
+            <button class="btn yellow" onclick="simWarn()">⚠️ Near Expiry</button>
+            <button class="btn red" onclick="simExpiry()">🚨 Expiring!</button>
+            <button class="btn orange" onclick="sendTestAlert()">📲 Test Alert</button>
+          </div>
+          <div style="margin-top:12px">
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted)">Simulate days passed: <span id="day-label">0</span> days</label>
+            <input type="range" min="0" max="10" value="0" id="day-slider" oninput="simulateDays(this.value)" style="width:100%;accent-color:var(--green);margin-top:6px">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card">
+      <div class="card-head">
+        📱 Shop Owner Alerts
+        <span id="notif-badge" style="background:var(--red);color:white;border-radius:20px;padding:2px 9px;font-size:0.7rem">4</span>
+      </div>
+      <div class="card-body" style="padding:12px">
+        <div class="notif-stream" id="notif-stream"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE POPUP -->
+<div class="mobile-popup" id="mobile-popup">
+  <div class="popup-notch" id="popup-notch"></div>
+  <div class="popup-bar">
+    <div class="popup-appname">🥦 FRESHTRACK PRO</div>
+    <div class="popup-time" id="popup-time">now</div>
+  </div>
+  <div class="popup-content">
+    <div class="popup-header">
+      <div class="popup-icon-wrap" id="popup-icon-wrap"><span id="popup-emoji">🥕</span></div>
+      <div>
+        <div class="popup-title" id="popup-title">Expiry Alert!</div>
+        <div class="popup-msg" id="popup-msg">Carrots expire in 1 day. Consider discounting or using now.</div>
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button class="popup-btn primary" onclick="closePopup()">View Details</button>
+      <button class="popup-btn secondary" onclick="closePopup()">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const veggies = [
+  { id:'v1', name:'Tomatoes',     emoji:'🍅', cat:'Vegetables', days:1,  maxDays:7,  qty:'2.4 kg', temp:'12°C', zone:'room'  },
+  { id:'v2', name:'Spinach',      emoji:'🌿', cat:'Vegetables', days:2,  maxDays:5,  qty:'800 g',  temp:'4°C',  zone:'cold'  },
+  { id:'v3', name:'Carrots',      emoji:'🥕', cat:'Vegetables', days:5,  maxDays:14, qty:'1.5 kg', temp:'4°C',  zone:'cold'  },
+  { id:'v4', name:'Broccoli',     emoji:'🥦', cat:'Vegetables', days:3,  maxDays:7,  qty:'600 g',  temp:'4°C',  zone:'cold'  },
+  { id:'v5', name:'Potatoes',     emoji:'🥔', cat:'Vegetables', days:20, maxDays:30, qty:'5 kg',   temp:'14°C', zone:'dry'   },
+  { id:'v6', name:'Onions',       emoji:'🧅', cat:'Vegetables', days:25, maxDays:30, qty:'3 kg',   temp:'14°C', zone:'dry'   },
+  { id:'v7', name:'Capsicum',     emoji:'🫑', cat:'Vegetables', days:4,  maxDays:10, qty:'900 g',  temp:'8°C',  zone:'cold'  },
+  { id:'v8', name:'Cucumber',     emoji:'🥒', cat:'Vegetables', days:2,  maxDays:7,  qty:'1.2 kg', temp:'8°C',  zone:'cold'  },
+];
+const fruits = [
+  { id:'f1', name:'Bananas',      emoji:'🍌', cat:'Fruits',     days:3,  maxDays:7,  qty:'1.8 kg', temp:'18°C', zone:'room'  },
+  { id:'f2', name:'Apples',       emoji:'🍎', cat:'Fruits',     days:10, maxDays:21, qty:'2 kg',   temp:'4°C',  zone:'cold'  },
+  { id:'f3', name:'Mangoes',      emoji:'🥭', cat:'Fruits',     days:2,  maxDays:5,  qty:'1.2 kg', temp:'12°C', zone:'room'  },
+  { id:'f4', name:'Grapes',       emoji:'🍇', cat:'Fruits',     days:5,  maxDays:10, qty:'500 g',  temp:'4°C',  zone:'cold'  },
+  { id:'f5', name:'Watermelon',   emoji:'🍉', cat:'Fruits',     days:7,  maxDays:14, qty:'4 kg',   temp:'10°C', zone:'room'  },
+  { id:'f6', name:'Papaya',       emoji:'🍈', cat:'Fruits',     days:1,  maxDays:4,  qty:'2 kg',   temp:'12°C', zone:'room'  },
+];
+const dairy = [
+  { id:'d1', name:'Milk',         emoji:'🥛', cat:'Dairy',      days:2,  maxDays:5,  qty:'2 L',    temp:'4°C',  zone:'cold'  },
+  { id:'d2', name:'Paneer',       emoji:'🧀', cat:'Dairy',      days:3,  maxDays:7,  qty:'500 g',  temp:'4°C',  zone:'cold'  },
+  { id:'d3', name:'Yogurt',       emoji:'🫙', cat:'Dairy',      days:4,  maxDays:10, qty:'1 kg',   temp:'4°C',  zone:'cold'  },
+  { id:'d4', name:'Butter',       emoji:'🧈', cat:'Dairy',      days:15, maxDays:30, qty:'200 g',  temp:'-18°C',zone:'freeze'},
+  { id:'d5', name:'Rice',         emoji:'🌾', cat:'Pantry',     days:90, maxDays:180,qty:'5 kg',   temp:'22°C', zone:'dry'   },
+  { id:'d6', name:'Lentils',      emoji:'🫘', cat:'Pantry',     days:60, maxDays:180,qty:'2 kg',   temp:'22°C', zone:'dry'   },
+];
+
+let allItems = [...veggies, ...fruits, ...dairy];
+let notifCount = 4;
+let popupTimer;
+
+function getStatus(item) {
+  const pct = item.days / item.maxDays;
+  if (item.days <= 0) return 'expired';
+  if (item.days <= 2) return 'expiring';
+  if (pct < 0.35) return 'warning';
+  return 'fresh';
+}
+
+function getFreshnessPct(item) {
+  return Math.max(0, Math.min(100, (item.days / item.maxDays) * 100));
+}
+
+function getFreshColor(status) {
+  return { fresh:'#2d7a4f', warning:'#e8b84b', expiring:'#e8763a', expired:'#d64040' }[status];
+}
+
+function renderGrid(items, gridId) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const status = getStatus(item);
+    const pct = getFreshnessPct(item);
+    const color = getFreshColor(status);
+    const daysText = item.days <= 0 ? 'Expired' : item.days === 1 ? '1 day left' : `${item.days} days left`;
+    const div = document.createElement('div');
+    div.className = `item-card ${status}`;
+    div.onclick = () => showItemAlert(item);
+    div.innerHTML = `
+      <div class="qty-badge">${item.qty}</div>
+      <span class="item-emoji">${item.emoji}</span>
+      <div class="item-name">${item.name}</div>
+      <div class="item-category">${item.cat} · ${item.zone}</div>
+      <div class="freshness-bar"><div class="freshness-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="item-meta">
+        <span class="days-badge ${status}">${daysText}</span>
+        <span class="item-temp">🌡 ${item.temp}</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function renderExpiryTable() {
+  const tbody = document.getElementById('expiry-tbody');
+  const sorted = [...allItems].sort((a,b) => a.days - b.days).slice(0, 10);
+  tbody.innerHTML = '';
+  sorted.forEach(item => {
+    const status = getStatus(item);
+    const daysText = item.days <= 0 ? 'Expired' : `${item.days}d`;
+    const action = status === 'expired' ? 'Remove' : status === 'expiring' ? 'Discount' : status === 'warning' ? 'Prioritize' : 'Monitor';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span style="margin-right:6px">${item.emoji}</span>${item.name}</td>
+      <td style="font-weight:700;color:${getFreshColor(status)}">${daysText}</td>
+      <td>${item.qty}</td>
+      <td><span class="status-pill ${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</span></td>
+      <td><button class="btn ghost" style="font-size:0.68rem;padding:4px 8px" onclick="actionItem('${item.id}','${action}')">${action}</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateHeaderStats() {
+  const fresh = allItems.filter(i=>getStatus(i)==='fresh').length;
+  const warn = allItems.filter(i=>getStatus(i)==='warning').length;
+  const exp = allItems.filter(i=>getStatus(i)==='expiring'||getStatus(i)==='expired').length;
+  document.getElementById('h-total').textContent = allItems.length;
+  document.getElementById('h-fresh').textContent = fresh;
+  document.getElementById('h-warn').textContent = warn;
+  document.getElementById('h-exp').textContent = exp;
+  document.getElementById('s-items').textContent = allItems.length;
+  document.getElementById('s-expiring').textContent = exp;
+  document.getElementById('s-lowstock').textContent = allItems.filter(i=>parseFloat(i.qty)<1).length;
+}
+
+function renderAll() {
+  renderGrid(veggies, 'veg-grid');
+  renderGrid(fruits, 'fruit-grid');
+  renderGrid(dairy, 'dairy-grid');
+  renderExpiryTable();
+  updateHeaderStats();
+}
+
+// ── NOTIFICATIONS ──
+function addNotif(type, icon, title, body) {
+  const stream = document.getElementById('notif-stream');
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = `notif-item ${type}`;
+  div.innerHTML = `
+    <span class="notif-icon">${icon}</span>
+    <div>
+      <div class="notif-title">${title}</div>
+      <div class="notif-body">${body}</div>
+      <div class="notif-time">Today, ${now}</div>
+    </div>`;
+  stream.insertBefore(div, stream.firstChild);
+  notifCount++;
+  document.getElementById('notif-badge').textContent = notifCount;
+}
+
+function showPopup(type, emoji, title, msg) {
+  clearTimeout(popupTimer);
+  const popup = document.getElementById('mobile-popup');
+  document.getElementById('popup-emoji').textContent = emoji;
+  document.getElementById('popup-title').textContent = title;
+  document.getElementById('popup-msg').textContent = msg;
+  document.getElementById('popup-icon-wrap').className = `popup-icon-wrap ${type}`;
+  document.getElementById('popup-notch').style.background =
+    type === 'danger' ? 'linear-gradient(90deg,var(--red),#e86060)'
+    : type === 'warning' ? 'linear-gradient(90deg,var(--yellow),#f0c040)'
+    : 'linear-gradient(90deg,var(--green),var(--green-mid))';
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('popup-time').textContent = now;
+  popup.classList.add('show');
+  popupTimer = setTimeout(() => popup.classList.remove('show'), 6000);
+}
+
+function closePopup() { document.getElementById('mobile-popup').classList.remove('show'); }
+function dismissBanner() { document.getElementById('alert-banner').classList.remove('show'); }
+
+function showBanner(type, icon, text) {
+  const b = document.getElementById('alert-banner');
+  b.className = `alert-banner show ${type}`;
+  document.getElementById('alert-icon').textContent = icon;
+  document.getElementById('alert-text').textContent = text;
+}
+
+function showItemAlert(item) {
+  const status = getStatus(item);
+  const daysText = item.days <= 0 ? 'has expired!' : `expires in ${item.days} day${item.days > 1 ? 's' : ''}!`;
+  const type = status === 'expired' || status === 'expiring' ? 'danger' : 'warning';
+  showPopup(type, item.emoji, `${item.name} Alert`, `${item.name} (${item.qty}) ${daysText} Stored at ${item.temp}.`);
+  addNotif(type === 'danger' ? 'danger' : 'warning', item.emoji, `${item.name} — ${status.charAt(0).toUpperCase()+status.slice(1)}`, `${item.qty} available · ${item.days}d remaining · ${item.zone} storage`);
+}
+
+function actionItem(id, action) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  addNotif('info', '📋', `${action}: ${item.name}`, `Action recorded for ${item.qty} of ${item.name}.`);
+  showPopup('fresh', item.emoji, `Action: ${action}`, `${item.name} marked for "${action}". Notification sent to shop owner.`);
+}
+
+// ── SIMULATIONS ──
+function simFresh() {
+  allItems.forEach(i => { i.days = Math.max(i.days, Math.round(i.maxDays * 0.7)); });
+  renderAll();
+  addNotif('fresh', '✅', 'All Items Fresh', 'Stock refreshed. All items within safe freshness range.');
+  showPopup('fresh', '🥦', 'Stock Updated', 'All items are fresh and well within expiry dates.');
+  dismissBanner();
+}
+
+function simWarn() {
+  allItems.forEach(i => { i.days = Math.max(1, Math.round(i.maxDays * 0.2)); });
+  renderAll();
+  const cnt = allItems.filter(i=>getStatus(i)==='warning'||getStatus(i)==='expiring').length;
+  addNotif('warning', '⚠️', `${cnt} Items Near Expiry`, 'Multiple items approaching their expiry. Review stock now.');
+  showPopup('warning', '⚠️', 'Stock Warning', `${cnt} items are approaching expiry. Consider discounting or early use.`);
+  showBanner('warning', '⚠️', `${cnt} items approaching expiry! Review and take action.`);
+}
+
+function simExpiry() {
+  allItems.forEach(i => { i.days = Math.floor(Math.random() * 2); });
+  renderAll();
+  addNotif('danger', '🚨', 'CRITICAL: Mass Expiry!', 'Most items expiring today/tomorrow. Immediate action needed!');
+  showPopup('danger', '🚨', 'CRITICAL ALERT!', 'Multiple items expiring! Notify customers, offer discounts, remove expired stock immediately.');
+  showBanner('danger', '🚨', 'CRITICAL: Most items expiring today! Immediate action required.');
+}
+
+function sendTestAlert() {
+  const expiring = allItems.filter(i => getStatus(i) === 'expiring' || getStatus(i) === 'expired');
+  if (expiring.length > 0) {
+    const item = expiring[0];
+    showPopup('danger', item.emoji, 'Expiry Alert Sent!', `Shop owner notified: ${item.name} (${item.qty}) expiring in ${item.days} days.`);
+    addNotif('danger', '📲', 'Alert Sent to Owner', `SMS + App notification dispatched for ${expiring.length} expiring items.`);
+  } else {
+    showPopup('fresh', '📲', 'Test Alert Sent', 'All items are fresh. Test notification dispatched to shop owner mobile.');
+    addNotif('info', '📲', 'Test Notification', 'Test alert sent successfully. System working normally.');
+  }
+}
+
+let sortAsc = true;
+function sortTable() {
+  sortAsc = !sortAsc;
+  const sorted = [...allItems].sort((a,b) => sortAsc ? a.days - b.days : b.days - a.days).slice(0,10);
+  const tbody = document.getElementById('expiry-tbody');
+  tbody.innerHTML = '';
+  sorted.forEach(item => {
+    const status = getStatus(item);
+    const daysText = item.days <= 0 ? 'Expired' : `${item.days}d`;
+    const action = status === 'expired' ? 'Remove' : status === 'expiring' ? 'Discount' : status === 'warning' ? 'Prioritize' : 'Monitor';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span style="margin-right:6px">${item.emoji}</span>${item.name}</td>
+      <td style="font-weight:700;color:${getFreshColor(status)}">${daysText}</td>
+      <td>${item.qty}</td>
+      <td><span class="status-pill ${status}">${status.charAt(0).toUpperCase()+status.slice(1)}</span></td>
+      <td><button class="btn ghost" style="font-size:0.68rem;padding:4px 8px" onclick="actionItem('${item.id}','${action}')">${action}</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function simulateDays(val) {
+  document.getElementById('day-label').textContent = val;
+  allItems.forEach(item => {
+    const base = { v1:1,v2:2,v3:5,v4:3,v5:20,v6:25,v7:4,v8:2,f1:3,f2:10,f3:2,f4:5,f5:7,f6:1,d1:2,d2:3,d3:4,d4:15,d5:90,d6:60 };
+    item.days = Math.max(0, (base[item.id] || 5) - parseInt(val));
+  });
+  renderAll();
+  const expiring = allItems.filter(i => getStatus(i) === 'expiring' || getStatus(i) === 'expired');
+  if (val > 0 && expiring.length > 0) {
+    addNotif('warning', '📅', `${val} Days Passed`, `${expiring.length} items now expiring or expired.`);
+    if (val >= 3) showPopup('danger', '⏰', `${val} Days Later`, `${expiring.length} items are now expiring! Check: ${expiring.slice(0,3).map(i=>i.name).join(', ')}.`);
+    showBanner('danger', '🚨', `After ${val} days: ${expiring.length} items expiring/expired!`);
+  } else if (val == 0) { dismissBanner(); }
+}
+
+// ── RFID SIMULATION ──
+const rfidTags = allItems.map((item, idx) => ({
+  ...item,
+  tagId: 'RF' + String(idx + 1).padStart(3,'0') + ':' +
+    Math.random().toString(16).slice(2,6).toUpperCase() + ':' +
+    Math.random().toString(16).slice(2,6).toUpperCase(),
+  scanned: false,
+}));
+
+let rfidScanIndex = 0;
+let rfidTotalScans = 0;
+let rfidOkScans = 0;
+let rfidAlertScans = 0;
+let rfidScanningActive = false;
+
+function renderRfidTags() {
+  const grid = document.getElementById('rfid-tags-grid');
+  grid.innerHTML = '';
+  rfidTags.forEach(tag => {
+    const status = getStatus(tag);
+    const card = document.createElement('div');
+    card.className = 'rfid-tag-card' + (tag.scanned ? ' scanned' : '');
+    card.id = 'rfid-tag-' + tag.id;
+    card.onclick = () => rfidScanSingle(tag.id);
+    card.innerHTML = `
+      <div class="rfid-tag-icon-wrap">${tag.emoji}</div>
+      <div class="rfid-tag-details">
+        <div class="rfid-tag-name">${tag.name} <span style="font-size:0.6rem;color:var(--text-muted);font-weight:400">${tag.qty}</span></div>
+        <div class="rfid-tag-id">${tag.tagId}</div>
+        <div class="rfid-tag-status ${status}">${tag.scanned ? '✓ Scanned — ' : ''}${status.charAt(0).toUpperCase()+status.slice(1)} · ${tag.days <= 0 ? 'Expired' : tag.days+'d left'}</div>
+      </div>
+      <div class="rfid-chip"></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function addScanLog(type, msg, tagId) {
+  const log = document.getElementById('rfid-scan-log');
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const entry = document.createElement('div');
+  entry.className = `scan-log-entry ${type}`;
+  entry.innerHTML = `
+    <span class="scan-log-time">${now}</span>
+    <span class="scan-log-msg">${msg}${tagId ? ' <span class="scan-log-tag">'+tagId+'</span>' : ''}</span>
+  `;
+  log.insertBefore(entry, log.firstChild);
+}
+
+function setReaderState(state) {
+  const led = document.getElementById('rfid-led');
+  const status = document.getElementById('rfid-reader-status');
+  const arcs = ['arc1','arc2','arc3'];
+  if (state === 'standby') {
+    led.className = 'rfid-reader-led';
+    status.className = 'rfid-reader-status';
+    status.textContent = '● Standby';
+    arcs.forEach(a => document.getElementById(a).classList.remove('active'));
+  } else if (state === 'scanning') {
+    led.className = 'rfid-reader-led scanning';
+    status.className = 'rfid-reader-status scanning-st';
+    status.textContent = '↻ Scanning...';
+    arcs.forEach(a => document.getElementById(a).classList.add('active'));
+  } else if (state === 'detected') {
+    led.className = 'rfid-reader-led detected';
+    status.className = 'rfid-reader-status detected-st';
+    status.textContent = '✓ Tag Detected!';
+    arcs.forEach(a => document.getElementById(a).classList.add('active'));
+  }
+}
+
+function updateRfidStats() {
+  document.getElementById('rfid-total-scans').textContent = rfidTotalScans;
+  document.getElementById('rfid-ok-scans').textContent = rfidOkScans;
+  document.getElementById('rfid-alert-scans').textContent = rfidAlertScans;
+}
+
+function rfidScanSingle(tagId) {
+  if (rfidScanningActive) return;
+  const tag = rfidTags.find(t => t.id === tagId);
+  if (!tag) return;
+  rfidScanningActive = true;
+  const btn = document.getElementById('rfid-single-btn');
+  const allBtn = document.getElementById('rfid-scan-all-btn');
+  btn.disabled = true; allBtn.disabled = true;
+
+  setReaderState('scanning');
+  addScanLog('info', `Scanning tag on ${tag.name}...`, tag.tagId);
+
+  setTimeout(() => {
+    setReaderState('detected');
+    tag.scanned = true;
+    rfidTotalScans++;
+    const status = getStatus(tag);
+    document.getElementById('rfid-last-scan').textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+    const card = document.getElementById('rfid-tag-' + tag.id);
+    if (card) { card.classList.add('scanning-tag'); setTimeout(() => { card.classList.remove('scanning-tag'); card.classList.add('scanned'); }, 600); }
+
+    if (status === 'fresh') {
+      rfidOkScans++;
+      addScanLog('ok', `✅ ${tag.name} — Fresh (${tag.days}d left) · ${tag.qty} · ${tag.zone}`, tag.tagId);
+    } else if (status === 'warning') {
+      rfidAlertScans++;
+      addScanLog('warn', `⚠️ ${tag.name} — Warning (${tag.days}d left) · Prioritize use!`, tag.tagId);
+    } else if (status === 'expiring') {
+      rfidAlertScans++;
+      addScanLog('err', `🚨 ${tag.name} — Expiring in ${tag.days}d! Take action now.`, tag.tagId);
+      addNotif('danger', tag.emoji, `RFID: ${tag.name} Expiring`, `Tag ${tag.tagId} scanned — ${tag.days}d remaining. ${tag.qty} in ${tag.zone}.`);
+    } else {
+      rfidAlertScans++;
+      addScanLog('err', `❌ ${tag.name} — EXPIRED! Remove from shelf immediately.`, tag.tagId);
+      addNotif('danger', tag.emoji, `RFID: ${tag.name} EXPIRED`, `Tag ${tag.tagId} scanned — item has expired. Remove stock now.`);
+    }
+
+    updateRfidStats();
+    renderRfidTags();
+
+    setTimeout(() => {
+      setReaderState('standby');
+      rfidScanningActive = false;
+      btn.disabled = false; allBtn.disabled = false;
+    }, 800);
+  }, 900);
+}
+
+function rfidScanNext() {
+  if (rfidScanningActive) return;
+  const unscanned = rfidTags.filter(t => !t.scanned);
+  if (unscanned.length === 0) {
+    addScanLog('info', 'All tags have been scanned. Reset to re-scan.');
+    return;
+  }
+  rfidScanSingle(unscanned[0].id);
+}
+
+function rfidScanAll() {
+  if (rfidScanningActive) return;
+  const unscanned = rfidTags.filter(t => !t.scanned);
+  if (unscanned.length === 0) {
+    rfidTags.forEach(t => t.scanned = false);
+    renderRfidTags();
+    addScanLog('info', 'Tags reset. Ready for new scan cycle.');
+    return;
+  }
+  addScanLog('info', `Starting batch scan of ${unscanned.length} RFID tags...`);
+  let i = 0;
+  function scanNext() {
+    if (i >= unscanned.length) {
+      setTimeout(() => {
+        const alerts = rfidTags.filter(t => getStatus(t) === 'expiring' || getStatus(t) === 'expired').length;
+        addScanLog('ok', `Batch scan complete. ${rfidTags.length} tags scanned. ${alerts} alerts found.`);
+        showPopup(alerts > 0 ? 'danger' : 'fresh', '📡', `RFID Scan Complete`, `All ${rfidTags.length} tags scanned. ${alerts > 0 ? alerts + ' items need attention!' : 'All items accounted for.'}`);
+      }, 400);
+      return;
+    }
+    rfidScanSingle(unscanned[i].id);
+    i++;
+    setTimeout(scanNext, 1200);
+  }
+  scanNext();
+}
+
+function clearScanLog() {
+  document.getElementById('rfid-scan-log').innerHTML =
+    '<div class="scan-log-entry info"><span class="scan-log-time">--:--</span><span class="scan-log-msg">Log cleared. RFID reader ready.</span></div>';
+}
+
+// ── INIT ──
+renderAll();
+renderRfidTags();
+addNotif('fresh', '✅', 'System Online', 'FreshTrack Pro connected. Monitoring 24 items across 4 storage zones.');
+addNotif('info', '📦', 'Stock Check Complete', 'Daily inventory sync done. All sensors reading normally.');
+addNotif('warning', '⚠️', 'Tomatoes — 1 Day Left', '2.4 kg of tomatoes expiring tomorrow. Consider discount.');
+addNotif('warning', '⚠️', 'Papaya — 1 Day Left', '2 kg papaya expiring. Alert sent to shop owner.');
+
+setTimeout(() => showPopup('danger', '🍅', 'Urgent: Tomatoes', 'Tomatoes (2.4 kg) expire tomorrow! Discount or sell today.'), 1500);
+setTimeout(() => showBanner('danger', '🚨', 'Tomatoes & Papaya expiring tomorrow — immediate action required!'), 800);
+</script>
+</body>
+</html>
